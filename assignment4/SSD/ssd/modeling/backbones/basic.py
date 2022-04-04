@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 from typing import Tuple, List
 
 
@@ -17,9 +18,182 @@ class BasicModel(torch.nn.Module):
             output_channels: List[int],
             image_channels: int,
             output_feature_sizes: List[Tuple[int]]):
+
         super().__init__()
+        self.feature_extractor = []
         self.out_channels = output_channels
         self.output_feature_shape = output_feature_sizes
+        self.detector0 = nn.Sequential(
+            nn.Conv2d(
+                in_channels=image_channels,
+                out_channels=32,
+                kernel_size=3,
+                stride=1,
+                padding=1
+            ),
+            nn.ReLU(),
+
+            nn.MaxPool2d(
+                kernel_size= 2,
+                stride = 2
+            ),
+            
+            nn.Conv2d(
+                in_channels = 32,
+                out_channels = 64,
+                kernel_size=3,
+                stride=1,
+                padding=1
+            ),
+            nn.ReLU(),
+
+            nn.MaxPool2d(
+                kernel_size= 2,
+                stride = 2
+            ),
+            nn.Conv2d(
+                in_channels = 64,
+                out_channels = 64,
+                kernel_size=3,
+                stride=1,
+                padding=1
+            ),
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels = 64,
+                out_channels = self.out_channels[0],
+                kernel_size=3,
+                stride=2,
+                padding=1
+            ),
+            nn.ReLU()
+
+        )
+        self.feature_extractor.append(self.detector0)
+
+        self.detector1 = nn.Sequential(
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels=self.out_channels[0],
+                out_channels=128,
+                kernel_size=3,
+                stride=1,
+                padding=1
+            ),
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels = 128,
+                out_channels = self.out_channels[1],
+                kernel_size=3,
+                stride=2,
+                padding=1
+            ),
+            nn.ReLU(),
+
+        )
+        self.feature_extractor.append(self.detector1)
+
+        self.detector2 = nn.Sequential(
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels=self.out_channels[1],
+                out_channels=256,
+                kernel_size=3,
+                stride=1,
+                padding=1
+            ),
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels = 256,
+                out_channels = self.out_channels[2],
+                kernel_size=3,
+                stride=2,
+                padding=1
+            ),
+            nn.ReLU(),
+
+        )
+        self.feature_extractor.append(self.detector2)
+
+
+        self.detector3 = nn.Sequential(
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels=self.out_channels[2],
+                out_channels=128,
+                kernel_size=3,
+                stride=1,
+                padding=1
+            ),
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels = 128,
+                out_channels = self.out_channels[3],
+                kernel_size=3,
+                stride=2,
+                padding=1
+            ),
+            nn.ReLU(),
+
+        )
+        self.feature_extractor.append(self.detector3)
+
+        self.detector4 = nn.Sequential(
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels=self.out_channels[3],
+                out_channels=128,
+                kernel_size=3,
+                stride=1,
+                padding=1
+            ),
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels = 128,
+                out_channels = self.out_channels[4],
+                kernel_size=3,
+                stride=2,
+                padding=1
+            ),
+            nn.ReLU(),
+
+        )
+        self.feature_extractor.append(self.detector4)
+
+        self.detector5 = nn.Sequential(
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels=self.out_channels[4],
+                out_channels=128,
+                kernel_size=3,
+                stride=1,
+                padding=1
+            ),
+            nn.ReLU(),
+
+            nn.Conv2d(
+                in_channels = 128,
+                out_channels = self.out_channels[5],
+                kernel_size=3,
+                stride=1
+            ),
+
+            nn.ReLU(),
+
+        )
+        self.feature_extractor.append(self.detector5)
+        
+
 
     def forward(self, x):
         """
@@ -35,6 +209,11 @@ class BasicModel(torch.nn.Module):
             shape(-1, output_channels[0], 38, 38),
         """
         out_features = []
+        for i in range(len(self.feature_extractor)):
+            out_features.append(self.feature_extractor[i](x))
+            x=out_features[i]
+        
+
         for idx, feature in enumerate(out_features):
             out_channel = self.out_channels[idx]
             h, w = self.output_feature_shape[idx]
@@ -44,4 +223,3 @@ class BasicModel(torch.nn.Module):
         assert len(out_features) == len(self.output_feature_shape),\
             f"Expected that the length of the outputted features to be: {len(self.output_feature_shape)}, but it was: {len(out_features)}"
         return tuple(out_features)
-
