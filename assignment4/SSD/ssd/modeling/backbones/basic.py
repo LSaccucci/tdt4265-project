@@ -47,10 +47,10 @@ class BasicModel(torch.nn.Module):
             ),
             nn.ReLU(),
 
-            nn.MaxPool2d(
-                kernel_size= 2,
-                stride = 2
-            ),
+            #nn.MaxPool2d(
+            #   kernel_size= 2,
+            #    stride = 2
+            #),
             nn.Conv2d(
                 in_channels = 64,
                 out_channels = 64,
